@@ -117,7 +117,7 @@ export function parseGeneratedFiles(response: string): Array<{ path: string; con
     let tempResponse = response;
     
     while ((match = regex.exec(tempResponse)) !== null) {
-      let path, content, language;
+      let path, content;
       
       if (pattern.toString().includes("@file")) {
         // Handle @file annotation format
@@ -126,7 +126,7 @@ export function parseGeneratedFiles(response: string): Array<{ path: string; con
       } else if (pattern.toString().includes("###")) {
         // Handle markdown header format
         path = match[1].trim();
-        language = match[2] || '';
+        const language = match[2] || '';
         content = match[3].trim();
       } else if (match.length === 3) {
         // Handle code block with language

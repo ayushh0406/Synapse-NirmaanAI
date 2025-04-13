@@ -217,14 +217,15 @@ export const PreviewPane: FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex justify-between items-center p-2 border-b border-border">
-        <div className="text-lg font-semibold">Preview</div>
+      <div className="flex justify-between items-center p-2 border-b-[3px] border-black dark:border-white">
+        <div className="text-lg font-bold">Preview</div>
         <div className="flex items-center space-x-2">
           <Button
             variant={viewportSize === 'mobile' ? 'default' : 'outline'} 
             size="icon"
             onClick={() => setViewportSize('mobile')}
             title="Mobile view"
+            className="neobrutalist-border"
           >
             <Smartphone size={16} />
           </Button>
@@ -233,6 +234,7 @@ export const PreviewPane: FC = () => {
             size="icon"
             onClick={() => setViewportSize('tablet')}
             title="Tablet view"
+            className="neobrutalist-border"
           >
             <Tablet size={16} />
           </Button>
@@ -241,6 +243,7 @@ export const PreviewPane: FC = () => {
             size="icon"
             onClick={() => setViewportSize('desktop')}
             title="Desktop view"
+            className="neobrutalist-border"
           >
             <Monitor size={16} />
           </Button>
@@ -258,6 +261,7 @@ export const PreviewPane: FC = () => {
             onClick={generatePreview}
             disabled={isProcessing || !generatedFiles.length}
             title="Refresh preview"
+            className="neobrutalist-border"
           >
             <RefreshCw size={16} className={isProcessing ? "animate-spin" : ""} />
           </Button>
@@ -267,6 +271,7 @@ export const PreviewPane: FC = () => {
             onClick={handleOpenDownloadDialog} 
             disabled={!generatedFiles.length}
             title="Download code"
+            className="neobrutalist-border"
           >
             <Download size={16} />
           </Button>
@@ -282,11 +287,11 @@ export const PreviewPane: FC = () => {
         ) : generatedFiles.length > 0 ? (
           <>
             {error && (
-              <Alert variant="destructive" className="mb-2">
+              <Alert variant="destructive" className="mb-2 neobrutalist-border">
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <div className="w-full h-full bg-white relative">
+            <div className="w-full h-full bg-white relative neobrutalist-border">
               <iframe 
                 ref={iframeRef}
                 className="w-full h-full border-0"
@@ -297,14 +302,17 @@ export const PreviewPane: FC = () => {
           </>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">Enter a prompt to generate UI</p>
+            <div className="neobrutalist-card p-6 bg-muted/30 rotate-1">
+              <p className="font-bold">No preview available</p>
+              <p className="text-muted-foreground mt-2">Enter a prompt to generate UI</p>
+            </div>
           </div>
         )}
       </div>
 
       {/* Download Confirmation Dialog */}
       <Dialog open={showDownloadDialog} onOpenChange={setShowDownloadDialog}>
-        <DialogContent>
+        <DialogContent className="neobrutalist-card">
           <DialogHeader>
             <DialogTitle>Download Project</DialogTitle>
             <DialogDescription>
@@ -313,7 +321,7 @@ export const PreviewPane: FC = () => {
           </DialogHeader>
           
           <div className="py-4">
-            <Label htmlFor="filename" className="block mb-2">
+            <Label htmlFor="filename" className="block mb-2 font-bold">
               Project Name
             </Label>
             <Input 
@@ -321,17 +329,18 @@ export const PreviewPane: FC = () => {
               value={downloadFilename} 
               onChange={(e) => setDownloadFilename(e.target.value)}
               placeholder="Enter project name"
-              className="w-full"
+              className="w-full neobrutalist-input"
             />
           </div>
           
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" className="neobrutalist-border">Cancel</Button>
             </DialogClose>
             <Button 
               onClick={downloadCode}
               disabled={isExporting || !downloadFilename.trim()}
+              className="neobrutalist-button"
             >
               {isExporting ? (
                 <><Loader2 size={16} className="animate-spin mr-2" /> Exporting...</>

@@ -56,12 +56,41 @@
     @apply bg-background text-foreground;
     font-family: 'Space Grotesk', sans-serif;
   }
+}
 
+@layer components {
+  /* Neobrutalism utility classes */
   .neobrutalist-border {
     @apply border-[3px] border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)];
   }
 
   .neobrutalist-button {
     @apply bg-primary text-primary-foreground font-bold border-[3px] border-black dark:border-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:hover:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] transition-all;
+  }
+
+  /* Neobrutalist card classes */
+  .neobrutalist-card {
+    @apply bg-background border-[3px] border-black dark:border-white rounded-lg shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)] overflow-hidden;
+  }
+
+  .neobrutalist-card-header {
+    @apply bg-primary text-primary-foreground font-bold px-4 py-2 border-b-[3px] border-black dark:border-white;
+  }
+
+  .neobrutalist-input {
+    @apply border-[3px] border-black dark:border-white rounded-md px-4 py-2 bg-background shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] focus:outline-none focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:focus:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] transition-all;
+  }
+
+  .neobrutalist-panel {
+    @apply border-[3px] border-black dark:border-white rounded-lg p-4 bg-background shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)];
+  }
+
+  /* Typewriter effect styles */
+  .typewriter-wrapper {
+    @apply inline-block;
+  }
+  
+  .typewriter-cursor {
+    @apply text-primary animate-pulse;
   }
 }

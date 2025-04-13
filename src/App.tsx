@@ -155,7 +155,7 @@ function App() {
       <div className="flex h-screen w-screen overflow-hidden">
         {/* Sliding Sidebar */}
         <div className={cn(
-          "h-full transition-all duration-300 ease-in-out",
+          "h-full transition-all duration-300 ease-in-out z-30",
           isSidebarOpen ? "w-64" : "w-0"
         )}>
           {isSidebarOpen && (
@@ -165,16 +165,16 @@ function App() {
         
         {/* Toggle sidebar button */}
         <button 
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-background border border-border p-1 rounded-r-md z-20"
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-background neobrutalist-border border-r-0 p-2 rounded-r-md z-40"
           onClick={toggleSidebar}
         >
           {isSidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
         </button>
 
         {/* Main content */}
-        <div className="flex flex-1 h-full overflow-hidden">
+        <div className="flex flex-1 h-full overflow-hidden relative">
           {/* Navbar */}
-          <div className="absolute top-0 left-0 right-0 z-10">
+          <div className="absolute top-0 left-0 right-0 z-30">
             <Navbar />
           </div>
 
@@ -186,43 +186,49 @@ function App() {
               isGenerating={isGenerating}
             />
           ) : (
-            <div className="flex w-full h-full pt-14">
-              {/* Chat section (left) */}
-              <div className="w-1/3 h-full border-r border-border overflow-hidden">
-                <ChatPanel 
-                  onSubmit={handlePromptSubmit}
-                  prompt={currentPrompt}
-                  setPrompt={setCurrentPrompt}
-                  isGenerating={isGenerating}
-                />
+            <div className="flex w-full h-full pt-14 p-4 gap-4">
+              {/* Chat section (left) - in neobrutalist card */}
+              <div className="w-1/3 h-full overflow-hidden neobrutalist-card">
+                <div className="neobrutalist-card-header flex items-center">
+                  <span className="text-lg font-bold">Chat</span>
+                </div>
+                <div className="h-[calc(100%-3rem)] overflow-hidden">
+                  <ChatPanel 
+                    onSubmit={handlePromptSubmit}
+                    prompt={currentPrompt}
+                    setPrompt={setCurrentPrompt}
+                    isGenerating={isGenerating}
+                  />
+                </div>
               </div>
               
-              {/* Code/Preview section (right) */}
-              <div className="w-2/3 h-full flex flex-col">
-                {/* Toggle between code and preview */}
-                <div className="flex border-b border-border">
-                  <Button 
-                    variant={activeTab === 'code' ? 'default' : 'ghost'}
-                    className="flex-1 rounded-none"
-                    onClick={() => setActiveTab('code')}
-                  >
-                    <Code className="mr-2 h-4 w-4" /> Code
-                  </Button>
-                  <Button
-                    variant={activeTab === 'preview' ? 'default' : 'ghost'}
-                    className="flex-1 rounded-none"
-                    onClick={() => setActiveTab('preview')}
-                  >
-                    <Play className="mr-2 h-4 w-4" /> Preview
-                  </Button>
+              {/* Code/Preview section (right) - in neobrutalist card */}
+              <div className="w-2/3 h-full overflow-hidden neobrutalist-card">
+                <div className="neobrutalist-card-header">
+                  <div className="flex">
+                    <Button 
+                      variant={activeTab === 'code' ? 'default' : 'ghost'}
+                      className="flex-1 rounded-none border-0 shadow-none px-4"
+                      onClick={() => setActiveTab('code')}
+                    >
+                      <Code className="mr-2 h-4 w-4" /> Code
+                    </Button>
+                    <Button
+                      variant={activeTab === 'preview' ? 'default' : 'ghost'}
+                      className="flex-1 rounded-none border-0 shadow-none px-4"
+                      onClick={() => setActiveTab('preview')}
+                    >
+                      <Play className="mr-2 h-4 w-4" /> Preview
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Content area */}
-                <div className="flex-1 overflow-hidden">
+                <div className="h-[calc(100%-3rem)] overflow-hidden">
                   {activeTab === 'code' && (
                     <div className="flex h-full">
                       {/* File explorer */}
-                      <div className="w-64 h-full overflow-y-auto border-r border-border">
+                      <div className="w-64 h-full overflow-y-auto border-r-[3px] border-black dark:border-white">
                         <FileExplorer 
                           files={generatedFiles} 
                           currentFile={currentFile} 

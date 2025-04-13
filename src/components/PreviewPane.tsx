@@ -12,151 +12,139 @@ export const PreviewPane: FC = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [sandpackError, setSandpackError] = useState<string | null>(null);
   const [sandpackFiles, setSandpackFiles] = useState<SandpackFiles>({});
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  // Process files for Sandpack when generated files change
+  // Process files whenever generatedFiles changes
   useEffect(() => {
     if (!generatedFiles || generatedFiles.length === 0) {
       setSandpackFiles(DEFAULT_FILES);
       return;
     }
 
+    setIsProcessing(true);
+    setSandpackError(null);
+    
     try {
-      const processedFiles = processFilesForSandpack(generatedFiles);
-      console.log("Processed files for Sandpack:", Object.keys(processedFiles));
-      setSandpackFiles(processedFiles);
-      setSandpackError(null);
-    } catch (error) {
-      console.error("Error processing files for Sandpack:", error);
-      setSandpackError(`Error preparing files: ${error.message}`);
+      console.log("Processing", generatedFiles.length, "files for preview");
+      
+      // Initial file mapping
+      const files: SandpackFiles = {};
+      
+      // First pass: Process all files
+      generatedFiles.forEach(file => {
+        const path = file.path.startsWith('/') ? file.path.substring(1) : file.path;
+        files[path] = {
+          code: file.content,
+          active: false
+        };
+      });
+      
+      // Ensure required files exist
+      ensureRequiredFiles(files);
+      
+      // Set active file
+      const appFile = findAppFile(files);
+      if (appFile && files[appFile]) {
+        files[appFile].active = true;
+      }
+      
+      console.log("Processed files for Sandpack:", Object.keys(files));
+      setSandpackFiles(files);
+    } catch (err) {
+      console.error("Error processing files for preview:", err);
+      setSandpackError(`Error preparing preview: ${err.message}`);
       setSandpackFiles(DEFAULT_FILES);
+    } finally {
+      setIsProcessing(false);
     }
   }, [generatedFiles]);
-
-  // Process files for Sandpack format
-  const processFilesForSandpack = (files): SandpackFiles => {
-    // Initial file map
-    const fileMap: SandpackFiles = {};
-    
-    // First pass: Add all original files to the map
-    files.forEach(file => {
-      const normalizedPath = file.path.startsWith('/') 
-        ? file.path.substring(1) 
-        : file.path;
-      
-      fileMap[normalizedPath] = { 
-        code: file.content,
-        active: false // We'll set the active file later
-      };
-    });
-    
-    // Check for required files and add them if missing
-    ensureRequiredFiles(fileMap);
-    
-    // Set active file (preferably App.jsx/tsx)
-    const appFile = findAppFile(fileMap);
-    if (appFile) {
-      fileMap[appFile].active = true;
-    }
-    
-    return fileMap;
-  };
-
+  
   // Find the main App file
-  const findAppFile = (fileMap: SandpackFiles): string | null => {
+  const findAppFile = (files: SandpackFiles): string | null => {
     const candidates = [
-      "src/App.jsx", 
-      "src/App.tsx",
-      "src/App.js",
-      "src/App.ts"
+      'src/App.jsx',
+      'src/App.tsx',
+      'src/App.js',
+      'src/App.ts'
     ];
     
     for (const candidate of candidates) {
-      if (fileMap[candidate]) {
+      if (files[candidate]) {
         return candidate;
       }
     }
     
-    // If no App file, take the first source file
-    const srcFile = Object.keys(fileMap).find(key => 
-      key.startsWith("src/") && 
-      (key.endsWith(".jsx") || key.endsWith(".tsx") || key.endsWith(".js")));
-    
-    return srcFile || null;
+    // If no App file found, look for any component
+    return Object.keys(files).find(path => 
+      path.includes('src/') && 
+      (path.endsWith('.jsx') || path.endsWith('.tsx') || path.endsWith('.js'))
+    ) || null;
   };
   
   // Ensure all required files exist
-  const ensureRequiredFiles = (fileMap: SandpackFiles) => {
+  const ensureRequiredFiles = (files: SandpackFiles) => {
     // Ensure index.html exists
-    if (!fileMap["index.html"]) {
-      fileMap["index.html"] = {
-        code: DEFAULT_FILES["index.html"].code,
+    if (!files['index.html'] && !files['public/index.html']) {
+      files['index.html'] = {
+        code: DEFAULT_FILES['index.html'].code,
         hidden: true
       };
     }
     
     // Ensure entry point exists
-    const hasEntryPoint = Object.keys(fileMap).some(path => 
-      path === "src/index.js" || path === "src/index.jsx" || 
-      path === "src/index.ts" || path === "src/index.tsx" ||
-      path === "src/main.jsx" || path === "src/main.tsx");
-    
-    if (!hasEntryPoint) {
-      fileMap["src/index.jsx"] = {
-        code: DEFAULT_FILES["src/index.jsx"].code,
-        hidden: true
-      };
-    }
-    
-    // Ensure styles exist
-    const hasStyles = Object.keys(fileMap).some(path => 
-      path === "src/index.css" || path === "src/styles.css");
-    
-    if (!hasStyles) {
-      fileMap["src/index.css"] = {
-        code: DEFAULT_FILES["src/styles.css"].code,
-        hidden: true
-      };
-    }
-    
-    // Ensure App component exists
-    const appFile = findAppFile(fileMap);
-    if (!appFile) {
-      // Find a component to use as the main component
-      const componentFile = Object.keys(fileMap).find(path => 
-        path.includes("/components/") || 
-        (fileMap[path].code && fileMap[path].code.includes("export default")));
-      
-      if (componentFile) {
-        // Create an App that imports this component
-        const extension = componentFile.split('.').pop();
-        const relativePath = componentFile.replace(/^src\//, './');
-        const importPath = relativePath.replace(new RegExp(`\\.${extension}$`), '');
-        const componentName = componentFile.split('/').pop().replace(new RegExp(`\\.${extension}$`), '');
-        
-        fileMap["src/App.jsx"] = {
-          code: `import React from 'react';\nimport ${componentName} from '${importPath}';\n\nexport default function App() {\n  return <${componentName} />;\n}`,
-          hidden: false
-        };
-      } else {
-        // No suitable component found, create a simple App
-        fileMap["src/App.jsx"] = {
-          code: DEFAULT_FILES["src/App.jsx"].code,
-          hidden: false
-        };
-      }
-    }
-    
-    // Add tailwind config if it's likely being used and not present
-    const usesTailwind = Object.values(fileMap).some(file => 
-      typeof file === 'object' && file.code && 
-      (file.code.includes('className=') || file.code.includes('@tailwind'))
+    const hasEntryPoint = Object.keys(files).some(path => 
+      path === 'src/index.js' || 
+      path === 'src/index.jsx' || 
+      path === 'src/index.tsx' ||
+      path === 'src/main.jsx' ||
+      path === 'src/main.tsx'
     );
     
-    if (usesTailwind && !fileMap["tailwind.config.js"]) {
-      fileMap["tailwind.config.js"] = {
+    if (!hasEntryPoint) {
+      files['src/index.jsx'] = {
+        code: `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`,
+        hidden: true
+      };
+    }
+    
+    // Ensure CSS exists
+    const hasCss = Object.keys(files).some(path => 
+      path.endsWith('.css')
+    );
+    
+    if (!hasCss) {
+      files['src/index.css'] = {
+        code: `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+}`,
+        hidden: true
+      };
+    }
+    
+    // Add tailwind config if missing
+    if (!files['tailwind.config.js']) {
+      files['tailwind.config.js'] = {
         code: `/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: ["./src/**/*.{js,jsx,ts,tsx}", "./index.html"],
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     extend: {},
   },
@@ -164,33 +152,19 @@ module.exports = {
 }`,
         hidden: true
       };
-      
-      // Ensure postcss.config.js exists
-      if (!fileMap["postcss.config.js"]) {
-        fileMap["postcss.config.js"] = {
-          code: `module.exports = {
+    }
+    
+    // Add postcss config if missing
+    if (!files['postcss.config.js']) {
+      files['postcss.config.js'] = {
+        code: `export default {
   plugins: {
     tailwindcss: {},
     autoprefixer: {},
   },
 }`,
-          hidden: true
-        };
-      }
-      
-      // Enhance CSS with Tailwind directives if we created it
-      if (!hasStyles) {
-        fileMap["src/index.css"] = {
-          code: `@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}`,
-          hidden: true
-        };
-      }
+        hidden: true
+      };
     }
   };
 
@@ -217,6 +191,39 @@ body {
       case 'desktop':
       default:
         return 'w-full h-full';
+    }
+  };
+  
+  // Reset preview
+  const resetPreview = () => {
+    if (!generatedFiles.length) return;
+    
+    setIsProcessing(true);
+    setSandpackError(null);
+    
+    // Re-process files
+    try {
+      const files: SandpackFiles = {};
+      
+      generatedFiles.forEach(file => {
+        const path = file.path.startsWith('/') ? file.path.substring(1) : file.path;
+        files[path] = {
+          code: file.content,
+          active: false
+        };
+      });
+      
+      ensureRequiredFiles(files);
+      const appFile = findAppFile(files);
+      if (appFile) {
+        files[appFile].active = true;
+      }
+      
+      setSandpackFiles(files);
+    } catch (err) {
+      setSandpackError(`Error resetting preview: ${err.message}`);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -249,13 +256,10 @@ body {
           <Button 
             variant="outline" 
             size="icon" 
-            onClick={() => {
-              const processed = processFilesForSandpack(generatedFiles);
-              setSandpackFiles(processed);
-              setSandpackError(null);
-            }}
+            onClick={resetPreview}
+            disabled={isProcessing || !generatedFiles.length}
           >
-            <RefreshCw size={16} />
+            <RefreshCw size={16} className={isProcessing ? "animate-spin" : ""} />
           </Button>
           <Button 
             variant="outline" 
@@ -269,52 +273,47 @@ body {
       </div>
       
       <div className={`flex-1 overflow-hidden ${getViewportClassName()}`}>
-        {sandpackError && (
-          <div className="p-4 mb-2 bg-destructive/10 text-destructive text-sm">
-            {sandpackError}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="ml-2"
-              onClick={() => setSandpackFiles(DEFAULT_FILES)}
-            >
-              Load Default
-            </Button>
+        {isProcessing ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin mb-2" />
+            <p className="text-muted-foreground">Preparing preview...</p>
           </div>
-        )}
-        
-        {generatedFiles.length > 0 ? (
-          <div className="h-full w-full">
-            <Sandpack
-              template="react"
-              files={sandpackFiles}
-              theme="dark"
-              options={{
-                showNavigator: false,
-                showLineNumbers: false,
-                showInlineErrors: true,
-                editorHeight: '100%',
-                editorWidthPercentage: 0,
-                recompileMode: "delayed",
-                recompileDelay: 500,
-              }}
-              customSetup={{
-                dependencies: {
-                  "react": "^18.2.0",
-                  "react-dom": "^18.2.0",
-                  "tailwindcss": "^3.3.0",
-                  "framer-motion": "^10.12.0",
-                  "@heroicons/react": "^2.0.18"
-                },
-                devDependencies: {
-                  "autoprefixer": "^10.4.14",
-                  "postcss": "^8.4.24"
-                }
-              }}
-              autorun={true}
-              className="h-full"
-            />
-          </div>
+        ) : generatedFiles.length > 0 ? (
+          <>
+            {sandpackError && (
+              <div className="p-4 mb-2 bg-destructive/10 text-destructive text-sm">
+                {sandpackError}
+              </div>
+            )}
+            <div className="h-full w-full">
+              <Sandpack
+                template="vite-react"
+                files={sandpackFiles}
+                theme="dark"
+                options={{
+                  showNavigator: false,
+                  showLineNumbers: false,
+                  showInlineErrors: true,
+                  editorHeight: 0,
+                  editorWidthPercentage: 0,
+                  recompileMode: "immediate",
+                  recompileDelay: 300
+                }}
+                customSetup={{
+                  dependencies: {
+                    "tailwindcss": "^3.3.0",
+                    "@heroicons/react": "^2.0.18",
+                    "framer-motion": "^10.12.0",
+                    "clsx": "^2.0.0"
+                  },
+                  devDependencies: {
+                    "autoprefixer": "^10.4.14",
+                    "postcss": "^8.4.24"
+                  }
+                }}
+              />
+            </div>
+          </>
         ) : (
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">Enter a prompt to generate UI</p>
@@ -333,9 +332,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-const rootElement = document.getElementById("root");
-const root = createRoot(rootElement);
-
+const root = createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <App />
@@ -362,15 +359,15 @@ export default function App() {
 }`,
     hidden: false,
   },
-  'src/styles.css': {
+  'src/index.css': {
     code: `@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
-    "Helvetica Neue", sans-serif;
+  padding: 0;
 }`,
     hidden: true,
   },
@@ -380,7 +377,7 @@ body {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Generated UI Preview</title>
+  <title>Generated UI</title>
 </head>
 <body>
   <div id="root"></div>
@@ -388,4 +385,27 @@ body {
 </html>`,
     hidden: true,
   },
+  'tailwind.config.js': {
+    code: `/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}`,
+    hidden: true,
+  },
+  'postcss.config.js': {
+    code: `export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}`,
+    hidden: true,
+  }
 };

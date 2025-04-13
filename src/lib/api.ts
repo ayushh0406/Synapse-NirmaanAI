@@ -1,0 +1,215 @@
+import { Groq } from "groq-sdk";
+import { BrandSettings } from './store';
+import { SYSTEM_PROMPT, formatPrompt, analyzePrompt } from './prompts';
+import JSZip from 'jszip';
+
+const groq = new Groq({
+  apiKey: import.meta.env.VITE_GROQ_API_KEY,
+  dangerouslyAllowBrowser: true,
+});
+
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
+export async function generateUI(prompt: string, brandSettings?: BrandSettings, conversationHistory: Message[] = []) {
+  try {
+    console.log("Starting UI generation with prompt:", prompt);
+    // Analyze prompt to understand user intent
+    const promptAnalysis = analyzePrompt(prompt);
+    
+    // Create conversation context from history
+    const recentMessages = conversationHistory.slice(-4); // Last 4 messages for context
+    const conversationContext = recentMessages.length > 0 
+      ? recentMessages.map(msg => `${msg.role.toUpperCase()}: ${msg.content}`).join('\n')
+      : undefined;
+    
+    // Format the prompt with brand settings and conversation context
+    const enhancedPrompt = formatPrompt(prompt, brandSettings, conversationContext);
+    console.log("Enhanced prompt:", enhancedPrompt);
+
+    // Prepare messages for API call
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...recentMessages.map(msg => ({ role: msg.role, content: msg.content })),
+      { role: 'user', content: enhancedPrompt }
+    ];
+
+    // Call Groq API
+    console.log("Sending request to Groq API");
+    const completion = await groq.chat.completions.create({
+      messages: messages.map(msg => ({ 
+        role: msg.role as any, 
+        content: msg.content 
+      })),
+      model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+      temperature: 0.7,
+      max_tokens: 4000,
+    });
+
+    const response = completion.choices[0]?.message?.content || '';
+    console.log("Received response from API:", response.substring(0, 100) + "...");
+    
+    // Extract summary and code sections
+    const summary = extractSummary(response);
+    const files = parseGeneratedFiles(response);
+    
+    if (files.length === 0) {
+      console.warn("No files were parsed from the response");
+      // Fallback parsing attempt
+      const simpleFile = {
+        path: 'src/App.jsx',
+        content: response,
+        language: 'javascript'
+      };
+      return {
+        summary: "Generated UI code",
+        files: [simpleFile],
+        rawResponse: response,
+        promptAnalysis
+      };
+    }
+    
+    console.log("Successfully parsed files:", files.map(f => f.path));
+    return {
+      summary,
+      files,
+      rawResponse: response,
+      promptAnalysis
+    };
+  } catch (error) {
+    console.error('Error generating UI:', error);
+    throw new Error('Failed to generate UI. Please try again.');
+  }
+}
+
+function extractSummary(response: string): string {
+  // Extract the summary, which is the text before the first file section
+  const summaryMatch = response.match(/^([\s\S]*?)(?=###\s+\S+|\s*$)/);
+  return summaryMatch ? summaryMatch[1].trim() : '';
+}
+
+export function parseGeneratedFiles(response: string): Array<{ path: string; content: string; language: string }> {
+  const files = [];
+  
+  // Try multiple regex patterns to be more robust
+  const patterns = [
+    // Standard markdown code blocks with file headers
+    /### (.*?)\r?\n```(?:([a-z]*))?\r?\n([\s\S]*?)```/g,
+    
+    // Alternative format with @file annotations
+    /\/\*\* @file (.*?) \*\/\r?\n([\s\S]*?)(?=\/\*\* @file|$)/g,
+    
+    // Look for code blocks with language identifiers
+    /```([a-z]*)\r?\n([\s\S]*?)```/g
+  ];
+  
+  // Try each pattern in sequence
+  for (const pattern of patterns) {
+    let match;
+    let matchFound = false;
+    const regex = new RegExp(pattern);
+    
+    while ((match = regex.exec(response)) !== null) {
+      matchFound = true;
+      
+      let path, content, language;
+      
+      if (pattern.toString().includes("@file")) {
+        // Handle @file annotation format
+        path = match[1].trim();
+        content = match[2].trim();
+      } else if (pattern.toString().includes("###")) {
+        // Handle markdown header format
+        path = match[1].trim();
+        content = match[3].trim();
+      } else {
+        // Handle simple code block - make up a path
+        path = `src/Component${files.length + 1}.${match[1] || 'jsx'}`;
+        content = match[2].trim();
+      }
+      
+      // Determine language from file extension
+      const extension = path.split('.').pop()?.toLowerCase();
+      switch (extension) {
+        case 'js':
+        case 'jsx':
+          language = 'javascript';
+          break;
+        case 'ts':
+        case 'tsx':
+          language = 'typescript';
+          break;
+        case 'css':
+          language = 'css';
+          break;
+        case 'json':
+          language = 'json';
+          break;
+        case 'html':
+          language = 'html';
+          break;
+        default:
+          language = 'javascript';
+      }
+      
+      files.push({ path, content, language });
+    }
+    
+    // If we found matches with this pattern, stop trying others
+    if (matchFound) break;
+  }
+  
+  return files;
+}
+
+export async function exportProject(files: Array<{ path: string; content: string }>): Promise<Blob> {
+  const zip = new JSZip();
+  
+  // Add each file to the zip
+  files.forEach(({path, content}) => {
+    zip.file(path, content);
+  });
+
+  // Add package.json if it doesn't exist
+  if (!files.find(f => f.path === 'package.json')) {
+    zip.file(
+      'package.json',
+      JSON.stringify(
+        {
+          name: 'generated-ui',
+          private: true,
+          version: '0.0.1',
+          type: 'module',
+          scripts: {
+            dev: 'vite',
+            build: 'tsc && vite build',
+            preview: 'vite preview',
+          },
+          dependencies: {
+            react: '^18.2.0',
+            'react-dom': '^18.2.0',
+            'framer-motion': '^11.0.0',
+            '@heroicons/react': '^2.0.0',
+            'clsx': '^2.0.0',
+            'tailwindcss': '^3.4.0',
+          },
+          devDependencies: {
+            '@types/react': '^18.2.0',
+            '@types/react-dom': '^18.2.0',
+            '@vitejs/plugin-react': '^4.2.0',
+            'autoprefixer': '^10.4.0',
+            'postcss': '^8.4.0',
+            'typescript': '^5.2.0',
+            'vite': '^5.0.0',
+          },
+        },
+        null,
+        2
+      )
+    );
+  }
+
+  return await zip.generateAsync({ type: 'blob' });
+}

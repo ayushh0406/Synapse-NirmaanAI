@@ -2,6 +2,7 @@ import { FC } from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import Typewriter from 'typewriter-effect';
 
 interface HeroSectionProps {
   prompt: string;
@@ -20,7 +21,16 @@ export const HeroSection: FC<HeroSectionProps> = ({ prompt, setPrompt, onSubmit,
         className="text-center mb-8"
       >
         <h1 className="text-4xl md:text-6xl font-bold mb-4">
-          Transform Text into <span className="text-primary">Beautiful UI</span>
+          <Typewriter
+            options={{
+              strings: ['Transform Text into <span class="text-primary">Beautiful UI</span>'],
+              autoStart: true,
+              loop: false,
+              delay: 60,
+              cursor: '|',
+              html: true,
+            }}
+          />
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
           Enter a description, and watch as AI generates a complete React application with Tailwind CSS styling in seconds.

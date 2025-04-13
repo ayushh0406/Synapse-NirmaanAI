@@ -20,15 +20,17 @@ REQUIRED FILES - YOU MUST INCLUDE:
 - tailwind.config.js - Tailwind configuration
 
 MUST-FOLLOW RULES:
-- Use Tailwind CSS for all styling
-- Use functional React components with hooks
-- Make the UI fully responsive
-- Add proper imports between files
-- Include comments where helpful
-- Double-check all file paths in imports
-- Ensure the application will render correctly
+- Use Tailwind CSS for all styling (no custom CSS except through Tailwind utilities)
+- Use simple React components without complex dependencies
+- Make sure all JSX components properly return markup
+- Avoid complex state management solutions
+- Keep component nesting minimal
+- All imports must be either from 'react' or relative imports of your own files
+- Triple check closing tags and element nesting in JSX
+- Don't import from external component libraries except react itself
+- Ensure the application will render in a browser with minimal dependencies
 
-YOUR CODE MUST BE PROPERLY FORMATTED AND COMPLETE TO RENDER IN A BROWSER.`;
+YOUR CODE MUST BE AS SELF-CONTAINED AND SIMPLE AS POSSIBLE TO ENSURE IT WILL RENDER IN A PREVIEW.`;
 
 export function formatPrompt(userPrompt: string, brandSettings?: BrandSettings, conversationContext?: string): string {
   // Basic prompt

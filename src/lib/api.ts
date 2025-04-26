@@ -43,9 +43,9 @@ export async function generateUI(prompt: string, brandSettings?: BrandSettings, 
         role: msg.role as any, 
         content: msg.content 
       })),
-      model: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+      model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
-      max_tokens: 4000,
+      max_tokens: 32768,
     });
 
     const response = completion.choices[0]?.message?.content || '';

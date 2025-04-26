@@ -46,12 +46,12 @@ export const HeroSection: FC<HeroSectionProps> = ({ prompt, setPrompt, onSubmit,
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center mb-12"
+        className="text-center mb-8"
       >
         <div className="inline-block neobrutalist-border bg-white dark:bg-black p-2 px-4 mb-4 rotate-[-1deg]">
           <span className="text-sm font-bold">⚡ AI-POWERED UI GENERATOR</span>
         </div>
-        <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight min-h-[120px]">
+        <h1 className="text-4xl md:text-7xl font-bold mb-2 leading-tight min-h-[100px]">
           <Typewriter
             options={{
               strings: ['Transform Text into <span class="text-primary">Beautiful UI</span>'],

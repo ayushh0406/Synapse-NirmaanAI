@@ -29,7 +29,7 @@ export const Sidebar: FC<SidebarProps> = ({
       <div className="p-4 border-b border-border">
         <div className="flex items-center">
           <Sparkles className="h-5 w-5 text-primary mr-2" />
-          <h1 className="text-lg font-bold">Synapse</h1>
+          <h1 className="text-lg font-bold">NirmaanAI</h1>
         </div>
         <p className="text-xs text-muted-foreground mt-1">AI-powered UI generator</p>
       </div>

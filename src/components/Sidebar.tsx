@@ -5,7 +5,8 @@ import {
   Settings, 
   History, 
   Palette, 
-  Sparkles
+  Sparkles,
+  ShoppingBag
 } from 'lucide-react';
 import { useStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -45,8 +46,8 @@ export const Sidebar: FC<SidebarProps> = ({
           className="w-full justify-start mb-2"
           onClick={onOpenBrandSettings}
         >
-          <Palette className="mr-2 h-4 w-4" />
-          Brand Settings
+          <ShoppingBag className="mr-2 h-4 w-4" />
+          Product Card Generator
         </Button>
         <Button variant="ghost" className="w-full justify-start">
           <Settings className="mr-2 h-4 w-4" />

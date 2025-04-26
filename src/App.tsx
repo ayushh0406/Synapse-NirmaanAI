@@ -173,91 +173,94 @@ function App() {
 
         {/* Main content */}
         <div className="flex flex-1 h-full overflow-hidden relative">
-          {/* Navbar */}
-          <div className="absolute top-0 left-0 right-0 z-30">
-            <Navbar />
-          </div>
-
-          {showHero ? (
-            <HeroSection 
-              onSubmit={handlePromptSubmit} 
-              prompt={currentPrompt} 
-              setPrompt={setCurrentPrompt}
-              isGenerating={isGenerating}
-            />
+          {isBrandSettingsOpen ? (
+            <div className="w-full h-full">
+              <BrandSettings />
+            </div>
           ) : (
-            <div className="flex w-full h-full pt-14 p-4 gap-4">
-              {/* Chat section (left) - in neobrutalist card */}
-              <div className="w-1/3 h-full overflow-hidden neobrutalist-card">
-                <div className="neobrutalist-card-header flex items-center">
-                  <span className="text-lg font-bold">Chat</span>
-                </div>
-                <div className="h-[calc(100%-3rem)] overflow-hidden">
-                  <ChatPanel 
-                    onSubmit={handlePromptSubmit}
-                    prompt={currentPrompt}
-                    setPrompt={setCurrentPrompt}
-                    isGenerating={isGenerating}
-                  />
-                </div>
+            <>
+              {/* Navbar */}
+              <div className="absolute top-0 left-0 right-0 z-30">
+                <Navbar />
               </div>
-              
-              {/* Code/Preview section (right) - in neobrutalist card */}
-              <div className="w-2/3 h-full overflow-hidden neobrutalist-card">
-                <div className="neobrutalist-card-header">
-                  <div className="flex">
-                    <Button 
-                      variant={activeTab === 'code' ? 'default' : 'ghost'}
-                      className="flex-1 rounded-none border-0 shadow-none px-4"
-                      onClick={() => setActiveTab('code')}
-                    >
-                      <Code className="mr-2 h-4 w-4" /> Code
-                    </Button>
-                    <Button
-                      variant={activeTab === 'preview' ? 'default' : 'ghost'}
-                      className="flex-1 rounded-none border-0 shadow-none px-4"
-                      onClick={() => setActiveTab('preview')}
-                    >
-                      <Play className="mr-2 h-4 w-4" /> Preview
-                    </Button>
+
+              {showHero ? (
+                <HeroSection 
+                  onSubmit={handlePromptSubmit} 
+                  prompt={currentPrompt} 
+                  setPrompt={setCurrentPrompt}
+                  isGenerating={isGenerating}
+                />
+              ) : (
+                <div className="flex w-full h-full pt-14 p-4 gap-4">
+                  {/* Chat section (left) - in neobrutalist card */}
+                  <div className="w-1/3 h-full overflow-hidden neobrutalist-card">
+                    <div className="neobrutalist-card-header flex items-center">
+                      <span className="text-lg font-bold">Chat</span>
+                    </div>
+                    <div className="h-[calc(100%-3rem)] overflow-hidden">
+                      <ChatPanel 
+                        onSubmit={handlePromptSubmit}
+                        prompt={currentPrompt}
+                        setPrompt={setCurrentPrompt}
+                        isGenerating={isGenerating}
+                      />
+                    </div>
                   </div>
-                </div>
-                
-                {/* Content area */}
-                <div className="h-[calc(100%-3rem)] overflow-hidden">
-                  {activeTab === 'code' && (
-                    <div className="flex h-full">
-                      {/* File explorer */}
-                      <div className="w-64 h-full overflow-y-auto border-r-[3px] border-black dark:border-white">
-                        <FileExplorer 
-                          files={generatedFiles} 
-                          currentFile={currentFile} 
-                          onSelectFile={setCurrentFile} 
-                        />
-                      </div>
-                      
-                      {/* Code editor */}
-                      <div className="flex-1 overflow-hidden">
-                        <CodeEditor 
-                          file={generatedFiles.find(f => f.path === currentFile) || null} 
-                        />
+                  
+                  {/* Code/Preview section (right) - in neobrutalist card */}
+                  <div className="w-2/3 h-full overflow-hidden neobrutalist-card">
+                    <div className="neobrutalist-card-header">
+                      <div className="flex">
+                        <Button 
+                          variant={activeTab === 'code' ? 'default' : 'ghost'}
+                          className="flex-1 rounded-none border-0 shadow-none px-4"
+                          onClick={() => setActiveTab('code')}
+                        >
+                          <Code className="mr-2 h-4 w-4" /> Code
+                        </Button>
+                        <Button
+                          variant={activeTab === 'preview' ? 'default' : 'ghost'}
+                          className="flex-1 rounded-none border-0 shadow-none px-4"
+                          onClick={() => setActiveTab('preview')}
+                        >
+                          <Play className="mr-2 h-4 w-4" /> Preview
+                        </Button>
                       </div>
                     </div>
-                  )}
-                  
-                  {activeTab === 'preview' && (
-                    <PreviewPane />
-                  )}
+                    
+                    {/* Content area */}
+                    <div className="h-[calc(100%-3rem)] overflow-hidden">
+                      {activeTab === 'code' && (
+                        <div className="flex h-full">
+                          {/* File explorer */}
+                          <div className="w-64 h-full overflow-y-auto border-r-[3px] border-black dark:border-white">
+                            <FileExplorer 
+                              files={generatedFiles} 
+                              currentFile={currentFile} 
+                              onSelectFile={setCurrentFile} 
+                            />
+                          </div>
+                          
+                          {/* Code editor */}
+                          <div className="flex-1 overflow-hidden">
+                            <CodeEditor 
+                              file={generatedFiles.find(f => f.path === currentFile) || null} 
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {activeTab === 'preview' && (
+                        <PreviewPane />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
         </div>
-
-        {/* Brand Settings Modal */}
-        {isBrandSettingsOpen && (
-          <BrandSettings onClose={toggleBrandSettings} />
-        )}
       </div>
     </ThemeProvider>
   );

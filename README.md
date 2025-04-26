@@ -1,55 +1,85 @@
 # 🧠 Synapse NirmaanAI – Multimodal UI Generator for eCommerce
 
-> ⚡ Powered by AI | Built with React + TailwindCSS + Groq API
+> Powered by AI | Built with React, TailwindCSS, Node.js
 
-Synapse NirmaanAI is a **multimodal AI-powered UI generator** for eCommerce brands that allows you to generate **brand-aligned static or animated landing pages** using **text prompts, brand inputs, and product images**.
-
-Perfect for **hackathons**, **product teams**, and **solo founders** who want to go from **idea → design → deploy** in minutes.
+Synapse NirmaanAI helps eCommerce brands quickly generate brand-aligned landing pages using text prompts, brand inputs, and product images.  
+Go from **idea → design → deploy** within minutes.
 
 ---
 
 ## 🚀 Features
 
-### ✅ Phase 1: Prompt-Based Page Generation
-- ✏️ Text prompt input (e.g., “Minimal perfume landing page”)
-- ⚙️ Generates JSX + TailwindCSS layout using **Mixtral** (via Groq API)
-- 🔍 Live code preview + editor
-- 📦 Export as ZIP / HTML / React
-
-### ✅ Phase 2: Brand Inputs (Multimodal Enhancer)
-- 🖼️ Upload product image (e.g., sneakers, phone, etc.)
-- 🎨 Set brand colors, fonts, and tone (Minimal / Playful / Luxury)
-- 🧠 AI merges prompt + brand style into generated layout
-
-### ✅ Phase 3: Iteration & Improvement
-- 🔁 Modify prompt, tweak fonts/colors, re-upload image
-- 💡 "Make it more Gen Z" → real-time design update
-- 🎞️ Add subtle animations with **Framer Motion**
-
-### ✅ Phase 4: UI Customization Panel
-- 🧩 Drag/drop sections (Hero / Features / CTA / etc.)
-- ✍️ Inline text editing
-- 🌈 Color palette + spacing controls
-
-### ✅ Phase 5: Export & Deployment
-- 📁 Download full React project
-- 🚀 Deploy to **Vercel** or **Netlify**
-- 🛍️ **Shopify Liquid Export** (WIP 🚧)
+- Generate landing pages using text prompts
+- Upload product images and apply brand styles (colors, fonts, tone)
+- Live code preview and editing
+- Drag and drop sections
+- Add animations using Framer Motion
+- Export project files or deploy directly
 
 ---
 
 ## 🧱 Tech Stack
 
-| Layer       | Tech                            |
-|-------------|----------------------------------|
-| Frontend    | React + TailwindCSS             |
-| Backend     | Node.js + Express               |
-| AI Model    | Groq API (`mixtral-8x7b-32768`) |
-| Image Upload| Cloudinary                      |
-| Editor      | Monaco Editor (VS Code style)   |
-| Preview     | Sandpack (Code live rendering)  |
-| Storage     | Firebase / Supabase (optional)  |
+- **Frontend:** React, TailwindCSS
+- **Backend:** Node.js, Express
+- **AI Integration:** Groq API
+- **Image Upload:** Cloudinary
+- **Editor:** Monaco Editor
+- **Live Preview:** Sandpack
 
 ---
 
+## 📦 Getting Started
 
+Follow these steps to set up and run the project locally:
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/AbhishekS31/Synapse-NirmaanAI.git
+cd Synapse-NirmaanAI
+
+```
+2. Install Dependencies
+bash
+Copy
+Edit
+```
+npm install
+```
+or
+
+bash
+Copy
+Edit
+```
+yarn install
+```
+3. Set Up Environment Variables
+Create a .env file in the root directory and add the following keys:
+
+env
+Copy
+Edit
+```
+GROQ_API_KEY=your_groq_api_key
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_SECRET=your_cloudinary_secret
+```
+📌 Note: You can get these keys from Groq and Cloudinary.
+
+4. Run the Development Server
+bash
+Copy
+Edit
+```
+npm run dev
+```
+or
+
+bash
+Copy
+Edit
+yarn dev
+Open your browser and visit: http://localhost:3000

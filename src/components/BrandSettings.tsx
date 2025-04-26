@@ -1,117 +1,196 @@
-import { useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { useStore } from '@/lib/store';
+import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Button } from "./ui/button";
+import { Card, CardContent } from "./ui/card";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Editor } from './Editor';
+import { PreviewPane } from './PreviewPane';
+import { generateProductCard } from '@/lib/ai';
+import { Loader2, ClipboardCopy, Download } from 'lucide-react';
 
-interface BrandSettingsProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-export function BrandSettings({ open, onOpenChange }: BrandSettingsProps) {
-  const { brandSettings, setBrandSettings } = useStore();
-
-  const onDrop = useCallback((acceptedFiles: File[], type: 'logo' | 'productImage') => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setBrandSettings({ [type]: file });
+export function BrandSettings() {
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    imageUrl: '',
+    colorTheme: 'blue',
+    designPrompt: ''
+  });
+  
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+  
+  const handleSelectChange = (value: string) => {
+    setFormData({
+      ...formData,
+      colorTheme: value
+    });
+  };
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsGenerating(true);
+    
+    try {
+      const code = await generateProductCard(formData);
+      setGeneratedCode(code);
+    } catch (error) {
+      console.error('Error generating card:', error);
+    } finally {
+      setIsGenerating(false);
     }
-  }, [setBrandSettings]);
-
-  const logoDropzone = useDropzone({
-    accept: { 'image/*': [] },
-    onDrop: (files) => onDrop(files, 'logo'),
-  });
-
-  const productImageDropzone = useDropzone({
-    accept: { 'image/*': [] },
-    onDrop: (files) => onDrop(files, 'productImage'),
-  });
+  };
+  
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedCode);
+  };
+  
+  const downloadCode = () => {
+    const element = document.createElement('a');
+    const file = new Blob([generatedCode], {type: 'text/javascript'});
+    element.href = URL.createObjectURL(file);
+    element.download = 'ProductCard.jsx';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[400px] sm:w-[540px]">
-        <SheetHeader>
-          <SheetTitle>Brand Settings</SheetTitle>
-        </SheetHeader>
-        <div className="space-y-6 py-6">
-          <div className="space-y-2">
-            <Label>Logo</Label>
-            <div
-              {...logoDropzone.getRootProps()}
-              className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary"
-            >
-              <input {...logoDropzone.getInputProps()} />
-              {brandSettings.logo ? (
-                <p>Logo uploaded: {brandSettings.logo.name}</p>
+    <div className="flex h-full gap-4 p-4">
+      {/* Form card (left) */}
+      <Card className="w-1/3 h-full overflow-y-auto">
+        <CardContent className="pt-6">
+          <h2 className="text-xl font-bold mb-6">Product Card Generator</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Product Name</Label>
+              <Input 
+                id="name" 
+                name="name" 
+                value={formData.name} 
+                onChange={handleChange} 
+                placeholder="Enter product name" 
+                required 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Product Description</Label>
+              <Textarea 
+                id="description" 
+                name="description" 
+                value={formData.description} 
+                onChange={handleChange} 
+                placeholder="Enter product description" 
+                required 
+                className="min-h-[100px]"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="imageUrl">Image URL (optional)</Label>
+              <Input 
+                id="imageUrl" 
+                name="imageUrl" 
+                value={formData.imageUrl} 
+                onChange={handleChange} 
+                placeholder="https://example.com/image.jpg" 
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="colorTheme">Color Theme</Label>
+              <Select value={formData.colorTheme} onValueChange={handleSelectChange}>
+                <SelectTrigger id="colorTheme">
+                  <SelectValue placeholder="Select a color theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="blue">Blue</SelectItem>
+                  <SelectItem value="green">Green</SelectItem>
+                  <SelectItem value="red">Red</SelectItem>
+                  <SelectItem value="purple">Purple</SelectItem>
+                  <SelectItem value="orange">Orange</SelectItem>
+                  <SelectItem value="monochrome">Monochrome</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="designPrompt">Design Instructions</Label>
+              <Textarea 
+                id="designPrompt" 
+                name="designPrompt" 
+                value={formData.designPrompt} 
+                onChange={handleChange} 
+                placeholder="Additional design instructions, e.g., 'Modern with rounded corners', 'Minimalist design', etc." 
+                className="min-h-[100px]"
+              />
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={isGenerating}>
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
               ) : (
-                <p>Drop logo here or click to upload</p>
+                'Generate Product Card'
               )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      
+      {/* Code and Preview card (right) */}
+      <Card className="w-2/3 h-full overflow-hidden">
+        <Tabs defaultValue="code" className="w-full h-full flex flex-col">
+          <div className="px-4 pt-4">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="code">Code</TabsTrigger>
+              <TabsTrigger value="preview">Preview</TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="code" className="flex-1 p-4 pt-0 overflow-hidden">
+            <div className="relative h-full flex flex-col">
+              <div className="flex justify-end gap-2 mb-2">
+                <Button variant="outline" size="sm" onClick={copyToClipboard} disabled={!generatedCode}>
+                  <ClipboardCopy className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+                <Button variant="outline" size="sm" onClick={downloadCode} disabled={!generatedCode}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </div>
+              <div className="flex-1 overflow-hidden border rounded-md">
+                <Editor
+                  value={generatedCode || '// Your generated code will appear here'}
+                  language="javascript"
+                  readOnly={true}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Product Image</Label>
-            <div
-              {...productImageDropzone.getRootProps()}
-              className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary"
-            >
-              <input {...productImageDropzone.getInputProps()} />
-              {brandSettings.productImage ? (
-                <p>Image uploaded: {brandSettings.productImage.name}</p>
-              ) : (
-                <p>Drop product image here or click to upload</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Brand Font</Label>
-            <Input
-              value={brandSettings.font}
-              onChange={(e) => setBrandSettings({ font: e.target.value })}
-              placeholder="Enter font name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Primary Color</Label>
-            <div className="flex gap-2">
-              <Input
-                type="color"
-                value={brandSettings.primaryColor}
-                onChange={(e) => setBrandSettings({ primaryColor: e.target.value })}
-                className="w-12 h-12 p-1"
-              />
-              <Input
-                value={brandSettings.primaryColor}
-                onChange={(e) => setBrandSettings({ primaryColor: e.target.value })}
-                placeholder="#000000"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Secondary Color</Label>
-            <div className="flex gap-2">
-              <Input
-                type="color"
-                value={brandSettings.secondaryColor}
-                onChange={(e) => setBrandSettings({ secondaryColor: e.target.value })}
-                className="w-12 h-12 p-1"
-              />
-              <Input
-                value={brandSettings.secondaryColor}
-                onChange={(e) => setBrandSettings({ secondaryColor: e.target.value })}
-                placeholder="#000000"
-              />
-            </div>
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+          </TabsContent>
+          
+          <TabsContent 
+            value="preview" 
+            className="flex-1 p-4 pt-0 overflow-auto"
+          >
+            <PreviewPane code={generatedCode} />
+          </TabsContent>
+        </Tabs>
+      </Card>
+    </div>
   );
 }
